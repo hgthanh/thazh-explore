@@ -1,0 +1,15 @@
+{
+  "name": "ThazhExplore",
+  "displayName": "Thazh Explore",
+  "version": "1.0.0",
+  "description": "Modern web browser with Safari-like interface and powerful features",
+  "author": "Thazh Team",
+  "homepage": "https://thazhsearch.wuaze.com",
+  "keywords": [
+    "browser",
+    "webview",
+    "react-native",
+    "safari",
+    "mobile"
+  ]
+}

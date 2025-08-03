@@ -1,0 +1,151 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Setup Java JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      
+    - name: Cache Gradle dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Cache npm dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+          
+    - name: Install dependencies
+      run: npm install
+      
+    - name: Create local.properties
+      run: |
+        echo "sdk.dir=$ANDROID_HOME" > android/local.properties
+        
+    - name: Generate keystore
+      run: |
+        mkdir -p android/app
+        keytool -genkeypair -v -storetype PKCS12 -keystore android/app/release.keystore \
+        -alias release -keyalg RSA -keysize 2048 -validity 10000 \
+        -storepass android -keypass android \
+        -dname "CN=Thazh Explore, OU=Mobile, O=Thazh, L=Vietnam, S=Vietnam, C=VN"
+        
+    - name: Create gradle.properties
+      run: |
+        echo "MYAPP_RELEASE_STORE_FILE=release.keystore" >> android/gradle.properties
+        echo "MYAPP_RELEASE_KEY_ALIAS=release" >> android/gradle.properties
+        echo "MYAPP_RELEASE_STORE_PASSWORD=android" >> android/gradle.properties
+        echo "MYAPP_RELEASE_KEY_PASSWORD=android" >> android/gradle.properties
+        
+    - name: Create Gradle Wrapper
+      run: |
+        # Tạo thư mục gradle wrapper nếu chưa có
+        mkdir -p android/gradle/wrapper
+        
+        # Tạo gradle-wrapper.jar từ network (fallback)
+        cd android
+        if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
+          curl -L -o gradle/wrapper/gradle-wrapper.jar \
+            https://github.com/gradle/gradle/raw/v8.3.0/gradle/wrapper/gradle-wrapper.jar
+        fi
+        
+    - name: Make gradlew executable
+      run: chmod +x android/gradlew
+      
+    - name: Build APK
+      working-directory: android
+      run: ./gradlew assembleRelease --no-daemon --stacktrace
+      
+    - name: Sign APK
+      uses: r0adkll/sign-android-release@v1
+      id: sign_app
+      with:
+        releaseDirectory: android/app/build/outputs/apk/release
+        signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+        alias: ${{ secrets.ALIAS }}
+        keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+        keyPassword: ${{ secrets.KEY_PASSWORD }}
+      env:
+        BUILD_TOOLS_VERSION: "34.0.0"
+        
+    - name: Rename APK
+      run: |
+        mv android/app/build/outputs/apk/release/app-release.apk \
+           android/app/build/outputs/apk/release/thazh-explore-${{ github.run_number }}.apk
+        
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: thazh-explore-apk
+        path: android/app/build/outputs/apk/release/thazh-explore-${{ github.run_number }}.apk
+        retention-days: 30
+        
+    - name: Create Release
+      if: github.ref == 'refs/heads/main'
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v1.0.${{ github.run_number }}
+        release_name: Thazh Explore v1.0.${{ github.run_number }}
+        draft: false
+        prerelease: false
+        body: |
+          ## Thazh Explore Browser v1.0.${{ github.run_number }}
+          
+          ### Features:
+          - Web browsing with WebView
+          - Safari-style interface
+          - Bookmark management
+          - Tab management
+          - Desktop mode toggle
+          - Default search: thazhsearch.wuaze.com
+          
+          ### Changes in this release:
+          - Auto-built from commit ${{ github.sha }}
+          
+          ### Download:
+          Download the APK file from the assets below.
+          
+    - name: Upload Release Asset
+      if: github.ref == 'refs/heads/main'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: android/app/build/outputs/apk/release/thazh-explore-${{ github.run_number }}.apk
+        asset_name: thazh-explore-v1.0.${{ github.run_number }}.apk
+        asset_content_type: application/vnd.android.package-archive
