@@ -1,4 +1,4 @@
-# Thazh Explore Browser
+# Thazh Explore
 
 Một trình duyệt web hiện đại được xây dựng bằng React Native với giao diện giống Safari và các tính năng duyệt web cơ bản.
 
@@ -121,7 +121,7 @@ thazh-explore/
 └── package.json
 ```
 
-> Chi tiết: [tại đây!](PROJECT_STRUCTURE.md)
+> Chi tiết về cấu trúc: [tại đây!](PROJECT_STRUCTURE.md)
 
 ## 🔧 Tùy chỉnh
 
@@ -153,17 +153,19 @@ const DEFAULT_SEARCH_ENGINE = 'https://your-search-engine.com';
 
 ## 📝 License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the License. See [`LICENSE`](LICENSE) for more information.
 
 ## 🔗 Links
 
 - **Default Search Engine:** http://thazhsearch.wuaze.com
-- **GitHub Repository:** https://github.com/yourusername/thazh-explore
-- **Issues:** https://github.com/yourusername/thazh-explore/issues
+- **GitHub Repository:** https://github.com/hgthanh/thazh-explore
+- **Issues:** https://github.com/hgthanh/thazh-explore/issues
 
-## 📞 Support
+## 📞 Contacts
 
-Nếu bạn gặp vấn đề hoặc có câu hỏi, vui lòng tạo issue trên GitHub repository.
+- **Email**: [admin@thazh.is-a.dev](mailto:admin@thazh.is-a.dev)
+- **Messenger**: [http://m.me/h0angthazh](http://m.me/h0angthazh)
+
 
 ---
 
