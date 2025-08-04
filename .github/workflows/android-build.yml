@@ -81,15 +81,18 @@ jobs:
         zipStorePath=wrapper/dists
         EOF
         
-        # Fix settings.gradle - Add local repositories for React Native
+        # Fix settings.gradle - Use absolute paths to node_modules
         cat > android/settings.gradle << 'EOF'
+        // Lấy đường dẫn thư mục gốc của dự án (nơi có package.json)
+        def projectRoot = settings.rootDir.parentFile
+
         pluginManagement {
             repositories {
                 gradlePluginPortal()
                 google()
                 mavenCentral()
-                // Thêm kho lưu trữ cục bộ cho buildscript plugins
-                maven { url "$rootDir/../node_modules/react-native/android" }
+                // Sử dụng đường dẫn tuyệt đối
+                maven { url new File(projectRoot, "node_modules/react-native/android") }
             }
         }
 
@@ -98,15 +101,15 @@ jobs:
             repositories {
                 google()
                 mavenCentral()
-                // Thêm các kho lưu trữ cục bộ cho các phụ thuộc của module
-                maven { url "$rootDir/../node_modules/react-native/android" }
-                maven { url "$rootDir/../node_modules/jsc-android/dist" }
+                // Sử dụng đường dẫn tuyệt đối
+                maven { url new File(projectRoot, "node_modules/react-native/android") }
+                maven { url new File(projectRoot, "node_modules/jsc-android/dist") }
                 maven { url 'https://www.jitpack.io' }
             }
         }
 
         rootProject.name = 'ThazhExplore'
-        apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)
+        apply from: new File(projectRoot, "node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)
         include ':app'
         EOF
         
