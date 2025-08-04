@@ -72,28 +72,35 @@ jobs:
     - name: Force Gradle 8.3 and Fix Settings
       run: |
         # Force update gradle wrapper properties
-        echo "distributionBase=GRADLE_USER_HOME" > android/gradle/wrapper/gradle-wrapper.properties
-        echo "distributionPath=wrapper/dists" >> android/gradle/wrapper/gradle-wrapper.properties  
-        echo "distributionUrl=https\\://services.gradle.org/distributions/gradle-8.3-bin.zip" >> android/gradle/wrapper/gradle-wrapper.properties
-        echo "networkTimeout=10000" >> android/gradle/wrapper/gradle-wrapper.properties
-        echo "zipStoreBase=GRADLE_USER_HOME" >> android/gradle/wrapper/gradle-wrapper.properties
-        echo "zipStorePath=wrapper/dists" >> android/gradle/wrapper/gradle-wrapper.properties
+        cat > android/gradle/wrapper/gradle-wrapper.properties << 'EOF'
+        distributionBase=GRADLE_USER_HOME
+        distributionPath=wrapper/dists
+        distributionUrl=https\://services.gradle.org/distributions/gradle-8.3-bin.zip
+        networkTimeout=10000
+        zipStoreBase=GRADLE_USER_HOME
+        zipStorePath=wrapper/dists
+        EOF
         
-        # Fix settings.gradle - remove react settings plugin
+        # Fix settings.gradle - Add local repositories for React Native
         cat > android/settings.gradle << 'EOF'
         pluginManagement {
             repositories {
                 gradlePluginPortal()
                 google()
                 mavenCentral()
+                // Thêm kho lưu trữ cục bộ cho buildscript plugins
+                maven { url "$rootDir/../node_modules/react-native/android" }
             }
         }
 
         dependencyResolutionManagement {
-            repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
+            repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
             repositories {
                 google()
                 mavenCentral()
+                // Thêm các kho lưu trữ cục bộ cho các phụ thuộc của module
+                maven { url "$rootDir/../node_modules/react-native/android" }
+                maven { url "$rootDir/../node_modules/jsc-android/dist" }
                 maven { url 'https://www.jitpack.io' }
             }
         }
@@ -103,7 +110,7 @@ jobs:
         include ':app'
         EOF
         
-        # Clean gradle cache
+        # Clean gradle cache to ensure new settings are used
         rm -rf ~/.gradle/caches/
         rm -rf ~/.gradle/wrapper/
         
@@ -112,6 +119,7 @@ jobs:
         cat android/gradle/wrapper/gradle-wrapper.properties
         echo "=== Settings.gradle ==="
         cat android/settings.gradle
+
         
     - name: Make gradlew executable
       run: chmod +x android/gradlew
