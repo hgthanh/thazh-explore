@@ -69,17 +69,22 @@ jobs:
         echo "MYAPP_RELEASE_STORE_PASSWORD=android" >> android/gradle.properties
         echo "MYAPP_RELEASE_KEY_PASSWORD=android" >> android/gradle.properties
         
-    - name: Create Gradle Wrapper
+    - name: Force Gradle 8.3 and Clean Cache
       run: |
-        # Tạo thư mục gradle wrapper nếu chưa có
-        mkdir -p android/gradle/wrapper
+        # Force update gradle wrapper properties
+        echo "distributionBase=GRADLE_USER_HOME" > android/gradle/wrapper/gradle-wrapper.properties
+        echo "distributionPath=wrapper/dists" >> android/gradle/wrapper/gradle-wrapper.properties  
+        echo "distributionUrl=https\\://services.gradle.org/distributions/gradle-8.3-bin.zip" >> android/gradle/wrapper/gradle-wrapper.properties
+        echo "networkTimeout=10000" >> android/gradle/wrapper/gradle-wrapper.properties
+        echo "zipStoreBase=GRADLE_USER_HOME" >> android/gradle/wrapper/gradle-wrapper.properties
+        echo "zipStorePath=wrapper/dists" >> android/gradle/wrapper/gradle-wrapper.properties
         
-        # Tạo gradle-wrapper.jar từ network (fallback)
-        cd android
-        if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
-          curl -L -o gradle/wrapper/gradle-wrapper.jar \
-            https://github.com/gradle/gradle/raw/v8.3.0/gradle/wrapper/gradle-wrapper.jar
-        fi
+        # Clean gradle cache
+        rm -rf ~/.gradle/caches/
+        rm -rf ~/.gradle/wrapper/
+        
+        # Verify gradle wrapper properties
+        cat android/gradle/wrapper/gradle-wrapper.properties
         
     - name: Make gradlew executable
       run: chmod +x android/gradlew
