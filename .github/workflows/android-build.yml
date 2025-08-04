@@ -81,15 +81,13 @@ jobs:
         zipStorePath=wrapper/dists
         EOF
         
-        # Fix settings.gradle - Move variable declaration inside blocks
+        # Fix settings.gradle - Ensure pluginManagement is the very first statement
         cat > android/settings.gradle << 'EOF'
-        // pluginManagement PHẢI là câu lệnh đầu tiên
         pluginManagement {
             repositories {
                 gradlePluginPortal()
                 google()
                 mavenCentral()
-                // Khai báo biến bên trong khối sử dụng nó
                 def projectRoot = settings.rootDir.parentFile
                 maven { url new File(projectRoot, "node_modules/react-native/android") }
             }
@@ -100,7 +98,6 @@ jobs:
             repositories {
                 google()
                 mavenCentral()
-                // Khai báo biến bên trong khối sử dụng nó
                 def projectRoot = settings.rootDir.parentFile
                 maven { url new File(projectRoot, "node_modules/react-native/android") }
                 maven { url new File(projectRoot, "node_modules/jsc-android/dist") }
@@ -109,7 +106,6 @@ jobs:
         }
 
         rootProject.name = 'ThazhExplore'
-        // Khai báo biến bên trong khối sử dụng nó
         def projectRoot = settings.rootDir.parentFile
         apply from: new File(projectRoot, "node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)
         include ':app'
@@ -124,7 +120,6 @@ jobs:
         cat android/gradle/wrapper/gradle-wrapper.properties
         echo "=== Settings.gradle ==="
         cat android/settings.gradle
-
         
     - name: Make gradlew executable
       run: chmod +x android/gradlew
