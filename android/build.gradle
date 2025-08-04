@@ -8,16 +8,16 @@ buildscript {
         targetSdkVersion = 34
         ndkVersion = "25.1.8937393"
         kotlinVersion = "1.8.0"
-        // Lấy phiên bản React Native tự động từ package.json
         reactNativeVersion = new File(['node', '--print', "JSON.parse(require('fs').readFileSync(require.resolve('react-native/package.json'), 'utf-8')).version"].execute(null, rootDir).text.trim())
     }
     repositories {
         google()
         mavenCentral()
+        // THÊM DÒNG NÀY: Chỉ cho Gradle biết nơi tìm react-native-gradle-plugin
+        maven { url "$rootDir/../node_modules/react-native/android" }
     }
     dependencies {
         classpath("com.android.tools.build:gradle:8.1.1")
-        // Sử dụng biến reactNativeVersion để chỉ định phiên bản plugin
         classpath("com.facebook.react:react-native-gradle-plugin:$reactNativeVersion")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
     }
@@ -27,15 +27,15 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        // Kho lưu trữ này có thể cần cho một số thư viện bên thứ ba
+        // Kho lưu trữ cục bộ cho React Native
         maven {
-            // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
             url "$rootDir/../node_modules/react-native/android"
         }
+        // Kho lưu trữ cục bộ cho JavaScriptCore (JSC)
         maven {
-            // Android JSC is installed from npm
             url "$rootDir/../node_modules/jsc-android/dist"
         }
+        // Kho lưu trữ cho các thư viện khác
         maven { url 'https://www.jitpack.io' }
     }
 }
