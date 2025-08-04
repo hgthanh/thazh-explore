@@ -69,7 +69,7 @@ jobs:
         echo "MYAPP_RELEASE_STORE_PASSWORD=android" >> android/gradle.properties
         echo "MYAPP_RELEASE_KEY_PASSWORD=android" >> android/gradle.properties
         
-    - name: Force Gradle 8.3 and Clean Cache
+    - name: Force Gradle 8.3 and Fix Settings
       run: |
         # Force update gradle wrapper properties
         echo "distributionBase=GRADLE_USER_HOME" > android/gradle/wrapper/gradle-wrapper.properties
@@ -79,12 +79,39 @@ jobs:
         echo "zipStoreBase=GRADLE_USER_HOME" >> android/gradle/wrapper/gradle-wrapper.properties
         echo "zipStorePath=wrapper/dists" >> android/gradle/wrapper/gradle-wrapper.properties
         
+        # Fix settings.gradle - remove react settings plugin
+        cat > android/settings.gradle << 'EOF'
+        pluginManagement {
+            repositories {
+                gradlePluginPortal()
+                google()
+                mavenCentral()
+            }
+        }
+
+        dependencyResolutionManagement {
+            repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
+            repositories {
+                google()
+                mavenCentral()
+                maven { url 'https://www.jitpack.io' }
+            }
+        }
+
+        rootProject.name = 'ThazhExplore'
+        apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)
+        include ':app'
+        EOF
+        
         # Clean gradle cache
         rm -rf ~/.gradle/caches/
         rm -rf ~/.gradle/wrapper/
         
-        # Verify gradle wrapper properties
+        # Verify files
+        echo "=== Gradle wrapper properties ==="
         cat android/gradle/wrapper/gradle-wrapper.properties
+        echo "=== Settings.gradle ==="
+        cat android/settings.gradle
         
     - name: Make gradlew executable
       run: chmod +x android/gradlew
