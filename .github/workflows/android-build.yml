@@ -81,35 +81,35 @@ jobs:
         zipStorePath=wrapper/dists
         EOF
         
-        # Fix settings.gradle - Ensure pluginManagement is the very first statement
+        # Fix settings.gradle - NO LEADING WHITESPACE/NEWLINES
         cat > android/settings.gradle << 'EOF'
-        pluginManagement {
-            repositories {
-                gradlePluginPortal()
-                google()
-                mavenCentral()
-                def projectRoot = settings.rootDir.parentFile
-                maven { url new File(projectRoot, "node_modules/react-native/android") }
-            }
-        }
-
-        dependencyResolutionManagement {
-            repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-            repositories {
-                google()
-                mavenCentral()
-                def projectRoot = settings.rootDir.parentFile
-                maven { url new File(projectRoot, "node_modules/react-native/android") }
-                maven { url new File(projectRoot, "node_modules/jsc-android/dist") }
-                maven { url 'https://www.jitpack.io' }
-            }
-        }
-
-        rootProject.name = 'ThazhExplore'
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
         def projectRoot = settings.rootDir.parentFile
-        apply from: new File(projectRoot, "node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)
-        include ':app'
-        EOF
+        maven { url new File(projectRoot, "node_modules/react-native/android") }
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        def projectRoot = settings.rootDir.parentFile
+        maven { url new File(projectRoot, "node_modules/react-native/android") }
+        maven { url new File(projectRoot, "node_modules/jsc-android/dist") }
+        maven { url 'https://www.jitpack.io' }
+    }
+}
+
+rootProject.name = 'ThazhExplore'
+def projectRoot = settings.rootDir.parentFile
+apply from: new File(projectRoot, "node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)
+include ':app'
+EOF
         
         # Clean gradle cache to ensure new settings are used
         rm -rf ~/.gradle/caches/
