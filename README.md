@@ -2,6 +2,8 @@
 
 Một trình duyệt web hiện đại được xây dựng bằng React Native với giao diện giống Safari và các tính năng duyệt web cơ bản.
 
+ > - [📥 Download Relaese](https://github.com/hgthanh/thazh-explore/releases)
+
 ## ✨ Tính năng
 
 - 🌐 **Duyệt web đầy đủ** - Sử dụng WebView để render các trang web
