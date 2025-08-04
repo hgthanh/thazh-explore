@@ -81,17 +81,16 @@ jobs:
         zipStorePath=wrapper/dists
         EOF
         
-        # Fix settings.gradle - Use absolute paths to node_modules
+        # Fix settings.gradle - Move variable declaration inside blocks
         cat > android/settings.gradle << 'EOF'
-        // Lấy đường dẫn thư mục gốc của dự án (nơi có package.json)
-        def projectRoot = settings.rootDir.parentFile
-
+        // pluginManagement PHẢI là câu lệnh đầu tiên
         pluginManagement {
             repositories {
                 gradlePluginPortal()
                 google()
                 mavenCentral()
-                // Sử dụng đường dẫn tuyệt đối
+                // Khai báo biến bên trong khối sử dụng nó
+                def projectRoot = settings.rootDir.parentFile
                 maven { url new File(projectRoot, "node_modules/react-native/android") }
             }
         }
@@ -101,7 +100,8 @@ jobs:
             repositories {
                 google()
                 mavenCentral()
-                // Sử dụng đường dẫn tuyệt đối
+                // Khai báo biến bên trong khối sử dụng nó
+                def projectRoot = settings.rootDir.parentFile
                 maven { url new File(projectRoot, "node_modules/react-native/android") }
                 maven { url new File(projectRoot, "node_modules/jsc-android/dist") }
                 maven { url 'https://www.jitpack.io' }
@@ -109,6 +109,8 @@ jobs:
         }
 
         rootProject.name = 'ThazhExplore'
+        // Khai báo biến bên trong khối sử dụng nó
+        def projectRoot = settings.rootDir.parentFile
         apply from: new File(projectRoot, "node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)
         include ':app'
         EOF
