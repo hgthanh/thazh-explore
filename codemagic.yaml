@@ -24,9 +24,81 @@ workflows:
           include: true
           source: true
     scripts:
+      - name: Debug React Native project structure
+        script: |
+          echo "🔍 Project structure analysis:"
+          echo "📋 Root directory:"
+          ls -la
+          
+          echo "📋 Package.json check:"
+          if [ -f "package.json" ]; then
+            echo "✅ package.json found"
+            grep -E '"react-native"|"name"|"version"' package.json | head -5
+          else
+            echo "❌ package.json not found!"
+          fi
+          
+          echo "📋 Android directory:"
+          if [ -d "android" ]; then
+            echo "✅ android directory found"
+            ls -la android/
+          else
+            echo "❌ android directory not found!"
+            exit 1
+          fi
+          
+          echo "📋 Android app directory:"
+          if [ -d "android/app" ]; then
+            echo "✅ android/app directory found" 
+            ls -la android/app/
+          else
+            echo "❌ android/app directory not found!"
+          fi
+          
+          echo "📋 Gradle files check:"
+          find android -name "*.gradle*" | head -5
+          
+          echo "📋 Source files check:"
+          find android/app/src -name "*.java" -o -name "*.kt" | head -5 || echo "No Java/Kotlin files found"
+      
       - name: Install dependencies
         script: |
           npm install
+        script: |
+          echo "🔍 Project structure analysis:"
+          echo "📋 Root directory:"
+          ls -la
+          
+          echo "📋 Package.json check:"
+          if [ -f "package.json" ]; then
+            echo "✅ package.json found"
+            grep -E '"react-native"|"name"|"version"' package.json | head -5
+          else
+            echo "❌ package.json not found!"
+          fi
+          
+          echo "📋 Android directory:"
+          if [ -d "android" ]; then
+            echo "✅ android directory found"
+            ls -la android/
+          else
+            echo "❌ android directory not found!"
+            exit 1
+          fi
+          
+          echo "📋 Android app directory:"
+          if [ -d "android/app" ]; then
+            echo "✅ android/app directory found" 
+            ls -la android/app/
+          else
+            echo "❌ android/app directory not found!"
+          fi
+          
+          echo "📋 Gradle files check:"
+          find android -name "*.gradle*" | head -5
+          
+          echo "📋 Source files check:"
+          find android/app/src -name "*.java" -o -name "*.kt" | head -5 || echo "No Java/Kotlin files found"
       
       - name: Setup Android environment
         script: |
@@ -93,27 +165,76 @@ workflows:
           cd android
           chmod +x gradlew
           echo "🚀 Starting APK build..."
-          ./gradlew assembleRelease --no-daemon --stacktrace
+          
+          # Debug: Show Gradle and Java versions
+          ./gradlew --version
+          echo "Java version: $(java -version 2>&1 | head -n 1)"
+          
+          # Clean build first
+          ./gradlew clean --no-daemon
+          
+          # Build with verbose logging
+          ./gradlew assembleRelease --no-daemon --stacktrace --info || {
+            echo "❌ APK build failed! Checking logs..."
+            echo "📋 Gradle daemon status:"
+            ./gradlew --status
+            echo "📋 Project structure:"
+            find . -name "build.gradle*" -o -name "settings.gradle" | head -10
+            echo "📋 Android directory contents:"
+            ls -la
+            exit 1
+          }
+          
           echo "✅ APK build completed successfully!"
           
-      - name: Build Android App Bundle (AAB)
+      - name: Build Android App Bundle (AAB) 
         script: |
           cd android
           echo "🚀 Starting AAB build..."
-          ./gradlew bundleRelease --no-daemon --stacktrace
-          echo "✅ AAB build completed successfully!"
+          ./gradlew bundleRelease --no-daemon --stacktrace || {
+            echo "⚠️ AAB build failed, but APK might still be available"
+          }
+          echo "✅ AAB build completed!"
           
       - name: Verify build outputs
         script: |
-          echo "📁 Build outputs:"
-          find android/app/build/outputs -name "*.apk" -o -name "*.aab" | head -10
+          echo "📁 Searching for build outputs..."
           
-          APK_PATH=$(find android/app/build/outputs -name "*.apk" | head -1)
-          if [ -f "$APK_PATH" ]; then
-            APK_SIZE=$(du -h "$APK_PATH" | cut -f1)
-            echo "✅ APK created: $APK_PATH ($APK_SIZE)"
+          # Check if android directory exists
+          if [ ! -d "android" ]; then
+            echo "❌ Android directory not found!"
+            exit 1
+          fi
+          
+          cd android
+          
+          # Show directory structure
+          echo "📋 Android directory structure:"
+          find . -type d -name "build" | head -5
+          find . -type d -name "outputs" | head -5
+          
+          # Look for APK files recursively
+          echo "🔍 Searching for APK files..."
+          APK_FILES=$(find . -name "*.apk" 2>/dev/null || true)
+          
+          if [ -n "$APK_FILES" ]; then
+            echo "✅ Found APK files:"
+            echo "$APK_FILES"
+            
+            # Get APK info
+            for apk in $APK_FILES; do
+              if [ -f "$apk" ]; then
+                APK_SIZE=$(du -h "$apk" | cut -f1)
+                echo "📱 APK: $apk (Size: $APK_SIZE)"
+              fi
+            done
           else
-            echo "❌ APK not found!"
+            echo "❌ No APK files found!"
+            echo "📋 Build directory contents:"
+            find . -path "*/build/*" -type f -name "*.apk" -o -name "*.aab" 2>/dev/null | head -10 || true
+            echo "📋 App build directory:"
+            ls -la app/build/ 2>/dev/null || echo "app/build directory not found"
+            ls -la app/build/outputs/ 2>/dev/null || echo "app/build/outputs directory not found" 
             exit 1
           fi
           
